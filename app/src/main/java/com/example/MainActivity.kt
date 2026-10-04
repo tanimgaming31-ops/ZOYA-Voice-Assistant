@@ -34,6 +34,7 @@ class MainActivity : ComponentActivity() {
           is Screen.Tools -> ToolsScreen(viewModel)
           is Screen.CameraVision -> CameraVisionScreen(viewModel)
           is Screen.Settings -> SettingsScreen(viewModel)
+          is Screen.MemoryManager -> MemoryManagerScreen(viewModel)
         }
       }
     }

@@ -46,6 +46,30 @@ fun SettingsScreen(viewModel: ZoyaViewModel) {
       contentPadding = PaddingValues(16.dp),
       verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+      // Memory Manager Button Card
+      item {
+        Card(
+          modifier = Modifier.fillMaxWidth(),
+          shape = RoundedCornerShape(16.dp),
+          colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+        ) {
+          Column(modifier = Modifier.padding(16.dp)) {
+            Text(text = "Long-Term Memory", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(text = "View, manage, or clear what ZOYA remembers about you.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Spacer(modifier = Modifier.height(12.dp))
+            Button(
+              onClick = { viewModel.navigateTo(Screen.MemoryManager) },
+              modifier = Modifier.fillMaxWidth()
+            ) {
+              Icon(Icons.Default.Psychology, contentDescription = null)
+              Spacer(modifier = Modifier.width(8.dp))
+              Text("Open Memory Manager")
+            }
+          }
+        }
+      }
+
       // Connection Level Card
       item {
         Card(

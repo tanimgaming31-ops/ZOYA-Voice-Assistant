@@ -29,8 +29,6 @@ import com.example.network.AssistantVoiceState
 import com.example.network.ZoyaVoiceManager
 import com.example.viewmodel.Screen
 import com.example.viewmodel.ZoyaViewModel
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -40,7 +38,6 @@ fun VoiceAssistantScreen(viewModel: ZoyaViewModel) {
   val language by viewModel.selectedLanguage.collectAsState()
 
   val voiceManager = remember {
-    // Pass application context and AI service
     com.example.network.ZoyaVoiceManager(context, com.example.network.ZoyaAiService(context))
   }
 
@@ -68,12 +65,34 @@ fun VoiceAssistantScreen(viewModel: ZoyaViewModel) {
     }
   }
 
-  val infiniteTransition = rememberInfiniteTransition(label = "voiceOrb")
-  val orbScale by infiniteTransition.animateFloat(
-    initialValue = 0.9f,
-    targetValue = 1.15f,
+  // Glowing Halo Animations for Audio Visualizer
+  val infiniteTransition = rememberInfiniteTransition(label = "audioVisualizer")
+  
+  val haloScale1 by infiniteTransition.animateFloat(
+    initialValue = 1.0f,
+    targetValue = 1.35f,
     animationSpec = infiniteRepeatable(
-      animation = tween(1000, easing = FastOutSlowInEasing),
+      animation = tween(1200, easing = FastOutSlowInEasing),
+      repeatMode = RepeatMode.Reverse
+    ),
+    label = "haloScale1"
+  )
+
+  val haloScale2 by infiniteTransition.animateFloat(
+    initialValue = 1.0f,
+    targetValue = 1.6f,
+    animationSpec = infiniteRepeatable(
+      animation = tween(1800, easing = FastOutSlowInEasing),
+      repeatMode = RepeatMode.Reverse
+    ),
+    label = "haloScale2"
+  )
+
+  val orbScale by infiniteTransition.animateFloat(
+    initialValue = 0.95f,
+    targetValue = 1.08f,
+    animationSpec = infiniteRepeatable(
+      animation = tween(800, easing = FastOutSlowInEasing),
       repeatMode = RepeatMode.Reverse
     ),
     label = "orbScale"
@@ -82,7 +101,7 @@ fun VoiceAssistantScreen(viewModel: ZoyaViewModel) {
   Scaffold(
     topBar = {
       TopAppBar(
-        title = { Text("ZOYA Real-time Voice", fontWeight = FontWeight.Bold) },
+        title = { Text("ZOYA Live Audio Visualizer", fontWeight = FontWeight.Bold) },
         navigationIcon = {
           IconButton(onClick = { 
             voiceManager.release()
@@ -145,30 +164,78 @@ fun VoiceAssistantScreen(viewModel: ZoyaViewModel) {
           }
         }
 
-        // Central Orb with wave animation
+        // Central Glowing Audio Visualizer & Orb
         Box(
           modifier = Modifier
-            .size(220.dp)
-            .scale(if (voiceState == AssistantVoiceState.LISTENING || voiceState == AssistantVoiceState.SPEAKING) orbScale else 1f)
-            .clip(CircleShape)
-            .background(
-              Brush.radialGradient(
-                listOf(Color(0xFF06B6D4), Color(0xFF8B5CF6), Color(0xFF4C1D95))
-              )
-            ),
+            .size(280.dp),
           contentAlignment = Alignment.Center
         ) {
-          Icon(
-            imageVector = when (voiceState) {
-              AssistantVoiceState.LISTENING -> Icons.Default.Mic
-              AssistantVoiceState.THINKING -> Icons.Default.HourglassEmpty
-              AssistantVoiceState.SPEAKING -> Icons.Default.VolumeUp
-              else -> Icons.Default.MicNone
-            },
-            contentDescription = null,
-            tint = Color.White,
-            modifier = Modifier.size(72.dp)
-          )
+          // Outer Halo Ring 2 (Active during Listening / Speaking)
+          if (voiceState == AssistantVoiceState.LISTENING || voiceState == AssistantVoiceState.SPEAKING) {
+            Box(
+              modifier = Modifier
+                .size(260.dp)
+                .scale(haloScale2)
+                .clip(CircleShape)
+                .background(
+                  Brush.radialGradient(
+                    listOf(
+                      if (voiceState == AssistantVoiceState.LISTENING) Color(0xFF10B981).copy(alpha = 0.25f)
+                      else Color(0xFF8B5CF6).copy(alpha = 0.25f),
+                      Color.Transparent
+                    )
+                  )
+                )
+            )
+
+            // Outer Halo Ring 1
+            Box(
+              modifier = Modifier
+                .size(220.dp)
+                .scale(haloScale1)
+                .clip(CircleShape)
+                .background(
+                  Brush.radialGradient(
+                    listOf(
+                      if (voiceState == AssistantVoiceState.LISTENING) Color(0xFF06B6D4).copy(alpha = 0.4f)
+                      else Color(0xFFEC4899).copy(alpha = 0.4f),
+                      Color.Transparent
+                    )
+                  )
+                )
+            )
+          }
+
+          // Central Dynamic Orb
+          Box(
+            modifier = Modifier
+              .size(180.dp)
+              .scale(if (voiceState == AssistantVoiceState.LISTENING || voiceState == AssistantVoiceState.SPEAKING) orbScale else 1f)
+              .clip(CircleShape)
+              .background(
+                Brush.radialGradient(
+                  when (voiceState) {
+                    AssistantVoiceState.LISTENING -> listOf(Color(0xFF34D399), Color(0xFF059669), Color(0xFF065F46))
+                    AssistantVoiceState.THINKING -> listOf(Color(0xFFFBBF24), Color(0xFFD97706), Color(0xFFB45309))
+                    AssistantVoiceState.SPEAKING -> listOf(Color(0xFFA78BFA), Color(0xFF7C3AED), Color(0xFF5B21B6))
+                    else -> listOf(Color(0xFF06B6D4), Color(0xFF8B5CF6), Color(0xFF4C1D95))
+                  }
+                )
+              ),
+            contentAlignment = Alignment.Center
+          ) {
+            Icon(
+              imageVector = when (voiceState) {
+                AssistantVoiceState.LISTENING -> Icons.Default.Mic
+                AssistantVoiceState.THINKING -> Icons.Default.HourglassEmpty
+                AssistantVoiceState.SPEAKING -> Icons.Default.VolumeUp
+                else -> Icons.Default.MicNone
+              },
+              contentDescription = null,
+              tint = Color.White,
+              modifier = Modifier.size(64.dp)
+            )
+          }
         }
 
         // Live Transcript / Feedback

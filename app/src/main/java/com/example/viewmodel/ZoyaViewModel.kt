@@ -29,6 +29,7 @@ sealed class Screen {
   object Tools : Screen()
   object CameraVision : Screen()
   object Settings : Screen()
+  object MemoryManager : Screen()
 }
 
 enum class VoiceState {
@@ -98,7 +99,6 @@ class ZoyaViewModel(application: Application) : AndroidViewModel(application) {
       _isLoading.value = true
       _voiceState.value = VoiceState.THINKING
 
-      // Check command shortcuts (weather, note, task)
       val lower = text.lowercase()
       val responseText = when {
         lower.contains("weather in") -> {
@@ -119,7 +119,7 @@ class ZoyaViewModel(application: Application) : AndroidViewModel(application) {
           val history = _chatMessages.value.takeLast(6).map { 
             (if (it.isUser) "user" else "model") to it.text 
           }
-          aiService.generateChatResponse(text, history)
+          aiService.generateChatResponse(text, history, memory.value)
         }
       }
 
@@ -182,6 +182,24 @@ class ZoyaViewModel(application: Application) : AndroidViewModel(application) {
   fun deleteReminder(id: Long) {
     viewModelScope.launch {
       database.reminderDao().deleteReminder(id)
+    }
+  }
+
+  fun saveMemory(key: String, value: String) {
+    viewModelScope.launch {
+      database.memoryDao().setMemory(MemoryEntity(key = key, value = value))
+    }
+  }
+
+  fun deleteMemory(key: String) {
+    viewModelScope.launch {
+      database.memoryDao().deleteMemory(key)
+    }
+  }
+
+  fun clearAllMemory() {
+    viewModelScope.launch {
+      database.memoryDao().clearAllMemory()
     }
   }
 

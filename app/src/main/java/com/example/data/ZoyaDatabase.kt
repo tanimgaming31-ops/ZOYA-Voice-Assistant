@@ -97,6 +97,9 @@ interface MemoryDao {
 
   @Query("DELETE FROM memory WHERE `key` = :key")
   suspend fun deleteMemory(key: String)
+
+  @Query("DELETE FROM memory")
+  suspend fun clearAllMemory()
 }
 
 @Database(entities = [NoteEntity::class, TaskEntity::class, ReminderEntity::class, MemoryEntity::class], version = 1, exportSchema = false)

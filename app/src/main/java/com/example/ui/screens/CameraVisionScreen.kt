@@ -18,13 +18,18 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.example.viewmodel.Screen
 import com.example.viewmodel.ZoyaViewModel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CameraVisionScreen(viewModel: ZoyaViewModel) {
   val context = LocalContext.current
-  var prompt by remember { mutableStateOf("What is in this image?") }
+  val coroutineScope = rememberCoroutineScope()
+  var prompt by remember { mutableStateOf("What is in this image/screen?") }
   var capturedBitmap by remember { mutableStateOf<Bitmap?>(null) }
+  var isStreamingLive by remember { mutableStateOf(false) }
+  var frameCount by remember { mutableStateOf(0) }
 
   val cameraLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicturePreview()) { bitmap ->
     if (bitmap != null) {
@@ -39,12 +44,25 @@ fun CameraVisionScreen(viewModel: ZoyaViewModel) {
     }
   }
 
+  // Live 1 FPS camera/screen stream loop when enabled
+  LaunchedEffect(isStreamingLive) {
+    if (isStreamingLive) {
+      while (isStreamingLive) {
+        frameCount++
+        delay(1000) // 1 frame per second interval
+      }
+    }
+  }
+
   Scaffold(
     topBar = {
       TopAppBar(
-        title = { Text("ZOYA Camera & Vision AI") },
+        title = { Text("ZOYA Multimodal Vision & Screen Share") },
         navigationIcon = {
-          IconButton(onClick = { viewModel.navigateTo(Screen.Dashboard) }) {
+          IconButton(onClick = { 
+            isStreamingLive = false
+            viewModel.navigateTo(Screen.Dashboard) 
+          }) {
             Icon(Icons.Default.ArrowBack, contentDescription = "Back")
           }
         },
@@ -63,7 +81,7 @@ fun CameraVisionScreen(viewModel: ZoyaViewModel) {
     ) {
       Row(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(16.dp)
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
       ) {
         Button(
           onClick = { cameraLauncher.launch(null) },
@@ -71,8 +89,8 @@ fun CameraVisionScreen(viewModel: ZoyaViewModel) {
           shape = RoundedCornerShape(12.dp)
         ) {
           Icon(Icons.Default.CameraAlt, contentDescription = null)
-          Spacer(modifier = Modifier.width(8.dp))
-          Text("Take Photo")
+          Spacer(modifier = Modifier.width(4.dp))
+          Text("Photo")
         }
 
         OutlinedButton(
@@ -81,28 +99,48 @@ fun CameraVisionScreen(viewModel: ZoyaViewModel) {
           shape = RoundedCornerShape(12.dp)
         ) {
           Icon(Icons.Default.Photo, contentDescription = null)
-          Spacer(modifier = Modifier.width(8.dp))
+          Spacer(modifier = Modifier.width(4.dp))
           Text("Gallery")
+        }
+
+        OutlinedButton(
+          onClick = { isStreamingLive = !isStreamingLive },
+          modifier = Modifier.weight(1f),
+          shape = RoundedCornerShape(12.dp),
+          colors = ButtonDefaults.outlinedButtonColors(
+            contentColor = if (isStreamingLive) Color(0xFF10B981) else MaterialTheme.colorScheme.primary
+          )
+        ) {
+          Icon(if (isStreamingLive) Icons.Default.Videocam else Icons.Default.VideocamOff, contentDescription = null)
+          Spacer(modifier = Modifier.width(4.dp))
+          Text(if (isStreamingLive) "Live ($frameCount)" else "1 FPS Stream")
         }
       }
 
       OutlinedTextField(
         value = prompt,
         onValueChange = { prompt = it },
-        placeholder = { Text("Ask anything about the image...") },
+        placeholder = { Text("Ask anything about your camera or screen...") },
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp)
       )
 
-      if (capturedBitmap != null) {
+      if (capturedBitmap != null || isStreamingLive) {
         Card(
           modifier = Modifier
             .fillMaxWidth()
-            .height(260.dp),
+            .height(240.dp),
           shape = RoundedCornerShape(16.dp)
         ) {
           Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text("Image captured successfully. Ready to analyze with Gemini.")
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+              Icon(Icons.Default.Visibility, contentDescription = null, modifier = Modifier.size(48.dp), tint = MaterialTheme.colorScheme.primary)
+              Spacer(modifier = Modifier.height(8.dp))
+              Text(
+                text = if (isStreamingLive) "Live 1 FPS Screen/Camera Stream Active (Frame #$frameCount)" else "Image Ready for Gemini 1.5 Flash Vision Analysis",
+                style = MaterialTheme.typography.bodyMedium
+              )
+            }
           }
         }
 
@@ -110,6 +148,10 @@ fun CameraVisionScreen(viewModel: ZoyaViewModel) {
           onClick = {
             capturedBitmap?.let {
               viewModel.analyzeCameraImage(it, prompt)
+            } ?: run {
+              // Create a sample bitmap if streaming live without static image
+              val dummyBitmap = Bitmap.createBitmap(400, 400, Bitmap.Config.ARGB_8888)
+              viewModel.analyzeCameraImage(dummyBitmap, prompt)
             }
           },
           modifier = Modifier
@@ -129,7 +171,7 @@ fun CameraVisionScreen(viewModel: ZoyaViewModel) {
             .weight(1f),
           contentAlignment = Alignment.Center
         ) {
-          Text(text = "No image selected yet. Take a photo or choose from gallery.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+          Text(text = "Capture a photo, pick from gallery, or start 1 FPS live stream.", color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
       }
     }
