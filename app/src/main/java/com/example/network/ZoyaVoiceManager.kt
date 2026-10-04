@@ -158,7 +158,11 @@ class ZoyaVoiceManager(private val context: Context, private val aiService: Zoya
         }
 
         val requestBody = jsonBody.toString().toRequestBody("application/json".toMediaType())
-        val request = Request.Builder().url(url).post(requestBody).build()
+        val request = Request.Builder()
+          .url(url)
+          .header("x-goog-api-key", apiKey)
+          .post(requestBody)
+          .build()
 
         client.newCall(request).execute().use { response ->
           if (!response.isSuccessful) {

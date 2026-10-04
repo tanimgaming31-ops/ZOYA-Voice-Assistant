@@ -74,7 +74,6 @@ class ZoyaAiService(private val context: Context) {
         val bodyJson = JSONObject()
         bodyJson.put("contents", contentsArray)
 
-        // Add Google Search grounding and function declarations
         val toolsArray = JSONArray()
         
         val searchTool = JSONObject()
@@ -147,6 +146,7 @@ class ZoyaAiService(private val context: Context) {
         val requestBody = bodyJson.toString().toRequestBody("application/json; charset=utf-8".toMediaType())
         val request = Request.Builder()
           .url(url)
+          .header("x-goog-api-key", key)
           .post(requestBody)
           .build()
 
@@ -280,7 +280,11 @@ class ZoyaAiService(private val context: Context) {
         bodyJson.put("contents", contentsArray)
 
         val requestBody = bodyJson.toString().toRequestBody("application/json; charset=utf-8".toMediaType())
-        val request = Request.Builder().url(url).post(requestBody).build()
+        val request = Request.Builder()
+          .url(url)
+          .header("x-goog-api-key", key)
+          .post(requestBody)
+          .build()
 
         client.newCall(request).execute().use { response ->
           if (!response.isSuccessful) return@withContext "Failed to analyze image."
