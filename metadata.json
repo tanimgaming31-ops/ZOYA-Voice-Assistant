@@ -1,0 +1,7 @@
+{
+  "name": "ZOYA Voice Assistant",
+  "description": "Your Personal AI Voice Assistant developed by Tanim",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+
